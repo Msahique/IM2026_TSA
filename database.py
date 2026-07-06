@@ -5,8 +5,9 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy.orm import declarative_base
 from common.dbutil import init_db, make_session_factory, SessionProxy
+from common import settings
 
-DB_NAME = os.getenv("TSA_DB_NAME", "tsa_db")
+DB_NAME = settings.get("TSA_DB_NAME", "tsa_server", "db_name", "tsa_db")
 Base = declarative_base()
 engine = None
 SessionLocal = SessionProxy()
