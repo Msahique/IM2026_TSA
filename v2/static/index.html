@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IM · Time-Stamp Authority</title>
+<style>
+  :root{--bg:#0f172a;--panel:#1e293b;--accent:#f59e0b;--muted:#94a3b8}
+  *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,system-ui,sans-serif;background:var(--bg);color:#e2e8f0}
+  header{background:#451a03;padding:16px 28px;border-bottom:3px solid var(--accent)}
+  header h1{margin:0;font-size:20px}header span{color:var(--muted);font-size:13px}
+  .tabs{display:flex;flex-wrap:wrap;gap:4px;background:#0b1220;padding:8px 28px;border-bottom:1px solid #334155}
+  .tabbtn{background:#1e293b;color:#cbd5e1;border:0;padding:8px 14px;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px}
+  .tabbtn.active{background:var(--accent);color:#451a03;font-weight:700}
+  main{max-width:1100px;margin:0 auto;padding:24px}
+  .panel{display:none}.panel.show{display:block}
+  .card{background:var(--panel);border-radius:10px;padding:18px;margin-bottom:18px;box-shadow:0 1px 3px #0006}
+  h2{font-size:15px;margin:0 0 12px;color:var(--accent)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:8px 10px;border-bottom:1px solid #334155}th{color:var(--muted)}
+  label{display:block;font-size:12px;color:var(--muted);margin:8px 0 3px}
+  input{width:100%;background:#0b1220;border:1px solid #334155;color:#e2e8f0;padding:7px 10px;border-radius:6px}
+  button{background:var(--accent);color:#451a03;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font-weight:600;margin-top:10px}
+  button.sm{padding:3px 8px;font-size:11px}button.red{background:#7f1d1d;color:#fecaca}
+  pre{background:#0b1220;padding:12px;border-radius:8px;overflow:auto;font-size:11px;color:#fcd34d;max-height:300px}
+</style>
+</head>
+<body>
+<header><h1>⏱️ Time-Stamp Authority</h1><span>port 9002 · RFC-3161-style signed timestamp tokens</span></header>
+<div class="tabs" id="tabs"></div>
+<main>
+  <!-- TIMESTAMPS -->
+  <section class="panel show" id="t-list"><div class="card"><h2>Issued timestamps <button class="sm red" style="float:right" onclick="clearAll()">Clear all</button></h2>
+    <table><thead><tr><th>Serial</th><th>Hash alg</th><th>Message imprint</th><th>Gen time (UTC)</th><th>Requester</th><th></th></tr></thead><tbody id="rows"></tbody></table>
+  </div></section>
+
+  <!-- CREATE -->
+  <section class="panel" id="t-create"><div class="card"><h2>Create a timestamp token</h2>
+    <label>message imprint (base64 SHA-256 digest)</label><input id="imprint" placeholder="base64…">
+    <label>requester</label><input id="requester" value="manual">
+    <button onclick="create()">Create timestamp</button>
+    <pre id="out" style="margin-top:12px"></pre>
+  </div></section>
+
+  <!-- TSA CERT -->
+  <section class="panel" id="t-cert"><div class="card"><h2>TSA certificate</h2><pre id="tsaCert">loading…</pre></div></section>
+</main>
+<script>
+const TABS=[['t-list','Timestamps'],['t-create','Create'],['t-cert','TSA cert']];
+document.getElementById('tabs').innerHTML=TABS.map((t,i)=>`<button class="tabbtn${i==0?' active':''}" data-tab="${t[0]}" onclick="tab('${t[0]}')">${t[1]}</button>`).join('');
+function tab(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remove('show'));document.getElementById(id).classList.add('show');
+  document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));document.querySelector(`[data-tab="${id}"]`).classList.add('active');}
+async function api(url,method='GET',body){const r=await fetch(url,{method,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});try{return await r.json()}catch{return{status:r.status}}}
+async function load(){
+  try{document.getElementById('tsaCert').textContent=await (await fetch('/api/tsa-cert')).text();}catch(e){}
+  const ts=await api('/api/timestamps');
+  document.getElementById('rows').innerHTML=ts.map(t=>`<tr><td>${(t.serial||'').slice(0,16)}…</td><td>${t.hash_alg}</td><td>${(t.hashed_message||'').slice(0,24)}…</td>
+    <td>${(t.gen_time||'').replace('T',' ').slice(0,19)}</td><td>${t.requester||''}</td>
+    <td><button class="sm red" onclick="del('${t.serial}')">Delete</button></td></tr>`).join('');
+}
+async function create(){const out=await api('/api/timestamp','POST',{hashed_message:document.getElementById('imprint').value.trim(),requester:document.getElementById('requester').value.trim()});
+  document.getElementById('out').textContent=JSON.stringify(out,null,2);load();}
+async function del(s){await api('/api/timestamps/'+s,'DELETE');load();}
+async function clearAll(){if(!confirm('Delete ALL timestamp records?'))return;await api('/api/timestamps','DELETE');load();}
+load(); setInterval(load,5000);
+</script>
+</body>
+</html>

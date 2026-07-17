@@ -1,0 +1,18 @@
+{
+  "_comment": "TSA Server config. Precedence: env var (in [brackets]) > this file > default. The TSA fetches its own timestamping certificate from the CA, so it needs the CA URL.",
+
+  "database": {
+    "host": "localhost",
+    "port": 3306,
+    "user": "root",
+    "password": "root"
+  },
+
+  "servers": {
+    "ca_url": "http://127.0.0.1:9001"
+  },
+
+  "tsa_server": {
+    "db_name": "tsa_db"
+  }
+}
