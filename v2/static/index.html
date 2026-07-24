@@ -51,16 +51,16 @@ function tab(id){document.querySelectorAll('.panel').forEach(p=>p.classList.remo
   document.querySelectorAll('.tabbtn').forEach(b=>b.classList.remove('active'));document.querySelector(`[data-tab="${id}"]`).classList.add('active');}
 async function api(url,method='GET',body){const r=await fetch(url,{method,headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined});try{return await r.json()}catch{return{status:r.status}}}
 async function load(){
-  try{document.getElementById('tsaCert').textContent=await (await fetch('/api/tsa-cert')).text();}catch(e){}
-  const ts=await api('/api/timestamps');
+  try{document.getElementById('tsaCert').textContent=await (await fetch('/im-tsa/api/tsa-cert')).text();}catch(e){}
+  const ts=await api('/im-tsa/api/timestamps');
   document.getElementById('rows').innerHTML=ts.map(t=>`<tr><td>${(t.serial||'').slice(0,16)}…</td><td>${t.hash_alg}</td><td>${(t.hashed_message||'').slice(0,24)}…</td>
     <td>${(t.gen_time||'').replace('T',' ').slice(0,19)}</td><td>${t.requester||''}</td>
     <td><button class="sm red" onclick="del('${t.serial}')">Delete</button></td></tr>`).join('');
 }
-async function create(){const out=await api('/api/timestamp','POST',{hashed_message:document.getElementById('imprint').value.trim(),requester:document.getElementById('requester').value.trim()});
+async function create(){const out=await api('/im-tsa/api/timestamp','POST',{hashed_message:document.getElementById('imprint').value.trim(),requester:document.getElementById('requester').value.trim()});
   document.getElementById('out').textContent=JSON.stringify(out,null,2);load();}
-async function del(s){await api('/api/timestamps/'+s,'DELETE');load();}
-async function clearAll(){if(!confirm('Delete ALL timestamp records?'))return;await api('/api/timestamps','DELETE');load();}
+async function del(s){await api('/im-tsa/api/timestamps/'+s,'DELETE');load();}
+async function clearAll(){if(!confirm('Delete ALL timestamp records?'))return;await api('/im-tsa/api/timestamps','DELETE');load();}
 load(); setInterval(load,5000);
 </script>
 </body>
