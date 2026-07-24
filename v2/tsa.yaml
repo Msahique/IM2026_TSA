@@ -42,4 +42,4 @@ metadata:
   name: tsa
 spec:
   selector: { app: tsa }
-  ports: [{ port: 9002, targetPort: 9002 }]
+  ports: [{ name: http, port: 9002, targetPort: 9002 }]
